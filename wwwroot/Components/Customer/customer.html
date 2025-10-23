@@ -1,0 +1,215 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <h4 class="m-0">Danh sách thành viên</h4>
+    <div class="d-flex gap-2 mt-2 mt-sm-0">
+      <input
+        type="text"
+        id="searchCustomer"
+        class="form-control"
+        placeholder="🔍 Tìm kiếm..."
+      />
+      <button class="btn btn-primary" id="btnAddCustomer">+ Thêm</button>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle mb-0">
+          <thead>
+            <tr class="text-center bg-light">
+              <th>Mã KH</th>
+              <th>Tên khách hàng</th>
+              <th>Hạng</th>
+              <th>Giới tính</th>
+              <th>Ngày sinh</th>
+              <th>Tổng chi tiêu (₫)</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="customerTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal thêm/sửa khách hàng -->
+<div class="modal fade" id="customerModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Thêm thành viên mới</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="customerId" />
+        <div class="mb-3">
+          <label class="form-label">Tên khách hàng</label>
+          <input type="text" id="newName" class="form-control" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Hạng</label>
+          <select id="newRank" class="form-select">
+            <option value="Kim Cương">Kim Cương</option>
+            <option value="Vàng">Vàng</option>
+            <option value="Bạc">Bạc</option>
+            <option value="Đồng">Đồng</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Giới tính</label>
+          <select id="newGender" class="form-select">
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Ngày sinh</label>
+          <input type="date" id="newDob" class="form-control" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Tổng chi tiêu (₫)</label>
+          <input type="number" id="newTotal" class="form-control" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Đóng
+        </button>
+        <button type="button" class="btn btn-primary" id="saveCustomer">
+          Lưu
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function () {
+    let customers =
+      JSON.parse(localStorage.getItem("customers")) || fakeDB.CUSTOMER;
+
+    const saveToLocal = () =>
+      localStorage.setItem("customers", JSON.stringify(customers));
+
+    const renderTable = (list) => {
+      let html = "";
+      list.forEach((c, i) => {
+        html += `
+          <tr>
+            <td class="text-center">${c.CODE}</td>
+            <td>${c.NAME}</td>
+            <td class="text-center">${c.RANK}</td>
+            <td class="text-center">${c["GIỚI TÍNH"]}</td>
+            <td class="text-center">${c.DOB}</td>
+            <td class="text-end">${c.TOTAL.toLocaleString()}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-warning me-1 edit-btn" data-id="${
+                c.ID
+              }">✏️</button>
+              <button class="btn btn-sm btn-danger delete-btn" data-id="${
+                c.ID
+              }">🗑️</button>
+            </td>
+          </tr>`;
+      });
+      $("#customerTable").html(html);
+    };
+
+    renderTable(customers);
+
+    // 🔍 Tìm kiếm
+    $("#searchCustomer").on("keyup", function () {
+      const keyword = $(this).val().toLowerCase();
+      const filtered = customers.filter(
+        (c) =>
+          c.NAME.toLowerCase().includes(keyword) ||
+          c.CODE.toLowerCase().includes(keyword) ||
+          c.RANK.toLowerCase().includes(keyword)
+      );
+      renderTable(filtered);
+    });
+
+    // ➕ Thêm mới
+    $("#btnAddCustomer").click(() => {
+      $("#modalTitle").text("Thêm thành viên mới");
+      $("#customerModal input").val("");
+      $("#customerModal").modal("show");
+      $("#customerId").val("");
+    });
+
+    // 💾 Lưu
+    $("#saveCustomer").click(() => {
+      const id = $("#customerId").val();
+      const name = $("#newName").val().trim();
+      const rank = $("#newRank").val();
+      const gender = $("#newGender").val();
+      const dob = $("#newDob").val();
+      const total = Number($("#newTotal").val());
+
+      if (!name || !dob || isNaN(total)) {
+        alert("Vui lòng nhập đầy đủ thông tin!");
+        return;
+      }
+
+      if (id) {
+        // Cập nhật
+        const index = customers.findIndex((x) => x.ID == id);
+        customers[index] = {
+          ...customers[index],
+          NAME: name,
+          RANK: rank,
+          "GIỚI TÍNH": gender,
+          DOB: dob,
+          TOTAL: total,
+        };
+      } else {
+        // Thêm mới
+        const newCustomer = {
+          ID: customers.length + 1,
+          CODE: "C" + String(customers.length + 1).padStart(3, "0"),
+          NAME: name,
+          RANK: rank,
+          "GIỚI TÍNH": gender,
+          DOB: dob,
+          TOTAL: total,
+        };
+        customers.push(newCustomer);
+      }
+
+      saveToLocal();
+      renderTable(customers);
+      $("#customerModal").modal("hide");
+    });
+
+    // ✏️ Sửa khách hàng
+    $(document).on("click", ".edit-btn", function () {
+      const id = $(this).data("id");
+      const c = customers.find((x) => x.ID == id);
+
+      $("#modalTitle").text("Chỉnh sửa thành viên");
+      $("#customerId").val(c.ID);
+      $("#newName").val(c.NAME);
+      $("#newRank").val(c.RANK);
+      $("#newGender").val(c["GIỚI TÍNH"]);
+      $("#newDob").val(c.DOB);
+      $("#newTotal").val(c.TOTAL);
+      $("#customerModal").modal("show");
+    });
+
+    // 🗑️ Xóa khách hàng
+    $(document).on("click", ".delete-btn", function () {
+      const id = $(this).data("id");
+      if (confirm("Bạn có chắc muốn xóa khách hàng này không?")) {
+        customers = customers.filter((x) => x.ID != id);
+        saveToLocal();
+        renderTable(customers);
+      }
+    });
+  });
+</script>

@@ -1,0 +1,296 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="m-0">Danh sách vòng quay</h4>
+    <button class="btn btn-primary" id="btnAddSpin">+ Thêm vòng quay</button>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle mb-0">
+          <thead class="bg-light text-center">
+            <tr>
+              <th>Tên vòng quay</th>
+              <th>Ngày bắt đầu</th>
+              <th>Ngày kết thúc</th>
+              <th>Mặc định</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="spinTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal thêm/sửa vòng quay -->
+<div class="modal fade" id="spinModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Thêm/Sửa vòng quay</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Tên vòng quay</label>
+            <input type="text" id="spinName" class="form-control" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Ngày bắt đầu</label>
+            <input type="date" id="spinStart" class="form-control" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Ngày kết thúc</label>
+            <input type="date" id="spinEnd" class="form-control" />
+          </div>
+          <div class="col-md-12">
+            <div class="form-check mt-2">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="spinDefault"
+              />
+              <label class="form-check-label" for="spinDefault"
+                >Đặt làm mặc định</label
+              >
+            </div>
+          </div>
+        </div>
+
+        <hr />
+        <h6>Danh sách sản phẩm</h6>
+        <table class="table table-sm table-bordered align-middle">
+          <thead class="bg-light text-center">
+            <tr>
+              <th>Sản phẩm</th>
+              <th>Tỷ lệ (%)</th>
+              <th>Mặc định</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="spinProductTable"></tbody>
+        </table>
+        <button
+          class="btn btn-outline-primary btn-sm mb-3"
+          id="btnAddProductRow"
+        >
+          + Thêm sản phẩm
+        </button>
+
+        <hr />
+        <h6>Danh sách khách hàng</h6>
+        <table class="table table-sm table-bordered align-middle">
+          <thead class="bg-light text-center">
+            <tr>
+              <th>Khách hàng</th>
+              <th>Số vòng quay</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="spinCustomerTable"></tbody>
+        </table>
+        <button class="btn btn-outline-primary btn-sm" id="btnAddCustomerRow">
+          + Thêm khách hàng
+        </button>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button class="btn btn-primary" id="saveSpin">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(function () {
+    // Lấy dữ liệu từ fakeDB
+    let spins = window.fakeDB.SPIN || [];
+    let products = window.fakeDB.PRODUCT || [];
+    let customers = window.fakeDB.CUSTOMER || [];
+
+    let editingSpinId = null;
+
+    function saveDB() {
+      window.fakeDB.SPIN = spins;
+      localStorage.setItem("fakeDB", JSON.stringify(window.fakeDB));
+    }
+
+    function renderTable() {
+      let html = "";
+      spins.forEach((s) => {
+        html += `
+        <tr data-id="${s.ID}">
+          <td>${s.NAME}</td>
+          <td class="text-center">${s.STARTDATE}</td>
+          <td class="text-center">${s.ENDDATE}</td>
+          <td class="text-center">${s.ISDEFAULT ? "✅" : ""}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-primary btnEditSpin">Sửa</button>
+            <button class="btn btn-sm btn-danger btnDeleteSpin">Xóa</button>
+          </td>
+        </tr>
+      `;
+      });
+      $("#spinTable").html(html);
+    }
+
+    renderTable();
+
+    // Mở modal thêm/sửa
+    $("#btnAddSpin").click(() => {
+      editingSpinId = null;
+      openSpinModal();
+    });
+
+    function openSpinModal(spin = null) {
+      $("#spinName").val(spin?.NAME || "");
+      $("#spinStart").val(spin?.STARTDATE || "");
+      $("#spinEnd").val(spin?.ENDDATE || "");
+      $("#spinDefault").prop("checked", spin?.ISDEFAULT || false);
+
+      $("#spinProductTable").html("");
+      if (spin?.PRODUCT) spin.PRODUCT.forEach((p) => addProductRow(p));
+
+      $("#spinCustomerTable").html("");
+      if (spin?.CUSTOMER) spin.CUSTOMER.forEach((c) => addCustomerRow(c));
+
+      $("#spinModal").modal("show");
+    }
+
+    // Thêm sản phẩm
+    $("#btnAddProductRow").click(() => addProductRow());
+    function addProductRow(p = null) {
+      const options = products
+        .map(
+          (pr) =>
+            `<option value="${pr.ID}" ${p?.ID === pr.ID ? "selected" : ""}>${
+              pr.NAME
+            }</option>`
+        )
+        .join("");
+      $("#spinProductTable").append(`
+      <tr>
+        <td><select class="form-select productSelect">${options}</select></td>
+        <td><input type="number" class="form-control ratioInput" value="${
+          p?.RATIO || 0
+        }" /></td>
+        <td class="text-center"><input type="checkbox" class="form-check-input isDefaultProduct" ${
+          p?.ISDEFAULT ? "checked" : ""
+        } /></td>
+        <td class="text-center"><button class="btn btn-sm btn-danger btnDelRow">X</button></td>
+      </tr>
+    `);
+    }
+
+    // Thêm khách hàng
+    $("#btnAddCustomerRow").click(() => addCustomerRow());
+    function addCustomerRow(c = null) {
+      const options = customers
+        .map(
+          (cu) =>
+            `<option value="${cu.ID}" ${c?.ID === cu.ID ? "selected" : ""}>${
+              cu.NAME
+            }</option>`
+        )
+        .join("");
+      $("#spinCustomerTable").append(`
+      <tr>
+        <td><select class="form-select customerSelect">${options}</select></td>
+        <td><input type="number" class="form-control spinCount" value="${
+          c?.NUMBEROFSPINS || 1
+        }" /></td>
+        <td class="text-center"><button class="btn btn-sm btn-danger btnDelRow">X</button></td>
+      </tr>
+    `);
+    }
+
+    // Xóa dòng sản phẩm/khách hàng
+    $(document).on("click", ".btnDelRow", function () {
+      $(this).closest("tr").remove();
+    });
+
+    // Lưu vòng quay
+    $("#saveSpin").click(() => {
+      const name = $("#spinName").val().trim();
+      const start = $("#spinStart").val();
+      const end = $("#spinEnd").val();
+      const isDefault = $("#spinDefault").is(":checked");
+
+      if (!name || !start || !end) {
+        alert("Vui lòng nhập đầy đủ thông tin vòng quay!");
+        return;
+      }
+
+      const productList = [];
+      $("#spinProductTable tr").each(function () {
+        const id = Number($(this).find(".productSelect").val());
+        const ratio = Number($(this).find(".ratioInput").val());
+        const def = $(this).find(".isDefaultProduct").is(":checked");
+        if (!id || isNaN(ratio)) return;
+        productList.push({ ID: id, RATIO: ratio, ISDEFAULT: def });
+      });
+
+      const customerList = [];
+      $("#spinCustomerTable tr").each(function () {
+        const id = Number($(this).find(".customerSelect").val());
+        const count = Number($(this).find(".spinCount").val());
+        if (!id || isNaN(count)) return;
+        customerList.push({ ID: id, NUMBEROFSPINS: count });
+      });
+
+      if (editingSpinId) {
+        const spin = spins.find((s) => s.ID === editingSpinId);
+        Object.assign(spin, {
+          NAME: name,
+          STARTDATE: start,
+          ENDDATE: end,
+          ISDEFAULT: isDefault,
+          PRODUCT: productList,
+          CUSTOMER: customerList,
+        });
+      } else {
+        const newSpin = {
+          ID: spins.length ? Math.max(...spins.map((s) => s.ID)) + 1 : 1,
+          NAME: name,
+          STARTDATE: start,
+          ENDDATE: end,
+          ISDEFAULT: isDefault,
+          PRODUCT: productList,
+          CUSTOMER: customerList,
+        };
+        spins.push(newSpin);
+      }
+
+      saveDB();
+      renderTable();
+      $("#spinModal").modal("hide");
+    });
+
+    // Sửa vòng quay
+    $(document).on("click", ".btnEditSpin", function () {
+      const id = $(this).closest("tr").data("id");
+      const spin = spins.find((s) => s.ID === id);
+      if (!spin) return;
+      editingSpinId = id;
+      openSpinModal(spin);
+    });
+
+    // Xóa vòng quay
+    $(document).on("click", ".btnDeleteSpin", function () {
+      const id = $(this).closest("tr").data("id");
+      if (confirm("Bạn có chắc muốn xóa vòng quay này?")) {
+        spins = spins.filter((s) => s.ID !== id);
+        saveDB();
+        renderTable();
+      }
+    });
+  });
+</script>

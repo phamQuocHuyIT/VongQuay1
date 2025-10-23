@@ -1,0 +1,98 @@
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  rel="stylesheet"
+/>
+
+<!-- CSS riêng cho trang người dùng -->
+<link rel="stylesheet" href="/wwwroot/Components/Users/css/users.css" />
+<div class="container-fluid mt-4">
+  <h2 class="mb-4 text-center">Quản lý Người Dùng</h2>
+
+  <div class="d-flex justify-content-between mb-3">
+    <button id="btnAddUser" class="btn btn-primary">+ Thêm người dùng</button>
+  </div>
+
+  <table class="table table-bordered table-hover align-middle text-center">
+    <thead class="table-dark">
+      <tr>
+        <th>ID</th>
+        <th>Tên đăng nhập</th>
+        <th>Họ tên</th>
+        <th>Mật khẩu</th>
+        <th>Hành động</th>
+      </tr>
+    </thead>
+    <tbody id="userTableBody"></tbody>
+  </table>
+
+  <!-- Modal thêm/sửa -->
+  <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="userForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalTitle">Thêm người dùng</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="userId" />
+
+            <div class="mb-3">
+              <label for="userUsername" class="form-label">Tên đăng nhập</label>
+              <input
+                type="text"
+                class="form-control"
+                id="userUsername"
+                required
+              />
+            </div>
+
+            <div class="mb-3">
+              <label for="userFullName" class="form-label">Họ tên</label>
+              <input
+                type="text"
+                class="form-control"
+                id="userFullName"
+                required
+              />
+            </div>
+
+            <div class="mb-3">
+              <label for="userPassword" class="form-label">Mật khẩu</label>
+              <input
+                type="password"
+                class="form-control"
+                id="userPassword"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Hủy
+            </button>
+            <button type="submit" class="btn btn-success">Lưu</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- jQuery và Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Fake Data (database ảo dùng chung toàn hệ thống) -->
+<script src="/wwwroot/Data/data.js"></script>
+
+<!-- JS riêng cho trang người dùng -->
+<script src="/wwwroot/Components/Users/js/users.js"></script>
