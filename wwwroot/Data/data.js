@@ -1,4 +1,3 @@
-// Fake Data (dùng như một cơ sở dữ liệu)
 window.fakeDB = {
   USER: [
     { Id: 1, Username: "admin", Password: "123456", FullName: "Quản trị viên" },
